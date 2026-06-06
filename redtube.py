@@ -54,9 +54,15 @@ def save_channel_as_m3u8(channel_name, stream_url):
 #EXT-X-STREAM-INF:BANDWIDTH=1280000,RESOLUTION=1280x720
 {stream_url}
 """
+    if os.path.exists(filename):
+        with open(filename, "r", encoding="utf-8") as f:
+            if f.read() == content:
+                print(f"No change: {filename}")
+                return  # Değişiklik yoksa yazma
+    
     with open(filename, "w", encoding="utf-8") as f:
         f.write(content)
-    print(f"Saved: {filename}")
+    print(f"Updated: {filename}")
 
 def create_master_playlist(channels):
     """Ana M3U listesi oluşturur"""
