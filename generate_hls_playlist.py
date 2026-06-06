@@ -2,32 +2,40 @@ import subprocess
 import sys
 from datetime import datetime
 
-def get_video_info(video_id):
+def run_yt_dlp(cmd):
     try:
-        # Kanal + Başlık al
-        info_cmd = [
-            'yt-dlp',
-            '--print', '%(channel)s - %(title)s',
-            f'https://www.youtube.com/watch?v={video_id}'
-        ]
-        info = subprocess.check_output(info_cmd, text=True, stderr=subprocess.DEVNULL).strip()
-        return info
-    except:
-        return f"Unknown Channel - {video_id}"
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        if result.returncode == 0:
+            return result.stdout.strip()
+        else:
+            print(f"yt-dlp error: {result.stderr}")
+            return None
+    except Exception as e:
+        print(f"Exception: {e}")
+        return None
+
+def get_video_info(video_id):
+    cmd = [
+        'yt-dlp',
+        '--print', '%(channel)s - %(title)s',
+        '--no-warnings',
+        f'https://www.youtube.com/watch?v={video_id}'
+    ]
+    info = run_yt_dlp(cmd)
+    return info if info else f"Unknown - {video_id}"
 
 def get_hls_url(video_id):
-    try:
-        # En iyi HLS (m3u8) linkini al
-        cmd = [
-            'yt-dlp',
-            '-f', 'best[protocol*=m3u8]/best',
-            '--get-url',
-            f'https://www.youtube.com/watch?v={video_id}'
-        ]
-        url = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL).strip()
-        return url
-    except:
-        return f"# Hata: {video_id} için HLS linki alınamadı"
+    # Daha agresif format seçimi + user agent
+    cmd = [
+        'yt-dlp',
+        '-f', 'best[protocol*=m3u8]/bestvideo+bestaudio/best',
+        '--get-url',
+        '--no-warnings',
+        '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        f'https://www.youtube.com/watch?v={video_id}'
+    ]
+    url = run_yt_dlp(cmd)
+    return url if url and url.startswith('http') else f"# Hata: {video_id} için HLS linki alınamadı"
 
 def main():
     output_file = "ytbred_hls.m3u"
@@ -35,17 +43,21 @@ def main():
     with open(output_file, "w", encoding="utf-8") as f:
         f.write("#EXTM3U\n")
         f.write("#EXT-X-PLAYLIST-TYPE:VOD\n")
-        f.write(f"# Playlist: ytbred_hls\n")
+        f.write("# Playlist: ytbred_hls (GitHub Actions)\n")
         f.write(f"# Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}\n")
         f.write("# https://github.com/botechred/ytbred\n\n")
         
-        with open("video_id.txt", "r", encoding="utf-8") as id_file:
-            video_ids = [line.strip() for line in id_file if line.strip() and not line.strip().startswith("#")]
-        
+        try:
+            with open("video_id.txt", "r", encoding="utf-8") as id_file:
+                video_ids = [line.strip() for line in id_file if line.strip() and not line.strip().startswith("#")]
+        except FileNotFoundError:
+            f.write("# Hata: video_id.txt bulunamadı!\n")
+            return
+
         print(f"Toplam {len(video_ids)} video işleniyor...")
         
         for idx, video_id in enumerate(video_ids, 1):
-            print(f"[{idx}/{len(video_ids)}] İşleniyor: {video_id}")
+            print(f"[{idx}/{len(video_ids)}] {video_id}")
             title = get_video_info(video_id)
             hls_url = get_hls_url(video_id)
             
