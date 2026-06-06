@@ -1,0 +1,44 @@
+name: YouTube HLS Playlist Generator
+
+on:
+  schedule:
+    - cron: "0 */3 * * *"     # Her 3 saatte bir (istediğin gibi değiştirebilirsin)
+  workflow_dispatch:          # Manuel tetikleme için
+
+jobs:
+  generate-hls:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install yt-dlp
+        run: |
+          python -m pip install --upgrade pip
+          pip install yt-dlp
+
+      - name: Generate HLS Playlist
+        run: python generate_hls_playlist.py
+
+      - name: Commit & Push Changes
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          git add ytbred_hls.m3u
+          
+          if git diff --staged --quiet; then
+            echo "No changes detected."
+          else
+            git commit -m "Update ytbred_hls.m3u - $(date '+%Y-%m-%d %H:%M:%S UTC')"
+            git push
+            echo "✅ HLS Playlist successfully updated and pushed"
+          fi
