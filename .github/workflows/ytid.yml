@@ -1,33 +1,42 @@
-name: YouTube ID Kontrol
+name: YouTube ID Kontrol & m3u8 Güncelle
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # 30 dakikada bir
+    - cron: "0 */2 * * *"     # Her 2 saatte bir
   workflow_dispatch:
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      - name: Repo checkout
-        uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v6
 
-      - name: Python kurulumu
-        uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
-      - name: Gerekli paketler
+      - name: Install Dependencies
         run: pip install requests
 
-      - name: m3u8 üret
+      - name: Run YouTube ID Kontrol Script
         run: python ytkontrolm3u.py
 
-      - name: Commit & Push
+      - name: Commit & Push Changes
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add video_id_no.txt
-          git commit -m "Auto refresh m3u8" || exit 0
-          git push
+          git config --local user.name "botechred"
+          git config --local user.email "botechred@gmail.com"
+          
+          git add -A
+          
+          if git diff --staged --quiet; then
+            echo "No changes detected."
+          else
+            git commit -m "Update YouTube IDs & m3u8 - $(date '+%Y-%m-%d %H:%M:%S UTC')"
+            git push
+            echo "✅ Successfully updated and pushed"
+          fi
