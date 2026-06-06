@@ -1,33 +1,47 @@
-name: Redtube liste olusturucu
+name: Update Redtube Playlist
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Manuel çalıştırmak için
   schedule:
-    - cron: '0 */4 * * *'
+    - cron: '0 */4 * * *'   # Her 4 saatte bir (daha sık yenileme)
 
 jobs:
-  build:
+  update:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: actions/setup-python@v5
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
-      - run: pip install requests urllib3
-      
-      - name: Run script
+          cache: 'pip'                    # Cache ile daha hızlı
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests urllib3
+
+      - name: Run redtube Script
         run: python redtube.py
         env:
           ENCRYPTED_PLAYLIST_URL: ${{ secrets.ENCRYPTED_PLAYLIST_URL }}
-      
-      - name: Commit files
+
+      - name: Commit & Push Changes
         run: |
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add -A
-          git diff --cached --quiet || git commit -m "Update Redtube playlist"
-          git push
+          
+          # Değişiklik varsa commit et
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git add -A
+            git commit -m "Update redtube playlist - $(date '+%Y-%m-%d %H:%M:%S')"
+            git push
+            echo "✅ Playlist successfully updated and pushed"
+          fi
