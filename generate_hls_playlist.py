@@ -37,34 +37,34 @@ def get_hls_url(video_id):
     url = run_yt_dlp(cmd)
     return url if url and url.startswith('http') else f"# Hata: {video_id} için HLS linki alınamadı"
 
+from datetime import datetime
+
 def main():
     output_file = "ytbred_hls.m3u"
     
+    try:
+        with open("video_id.txt", "r", encoding="utf-8") as f:
+            video_ids = [line.strip() for line in f if line.strip() and not line.strip().startswith("#")]
+    except FileNotFoundError:
+        print("❌ video_id.txt bulunamadı!")
+        return
+
     with open(output_file, "w", encoding="utf-8") as f:
         f.write("#EXTM3U\n")
         f.write("#EXT-X-PLAYLIST-TYPE:VOD\n")
-        f.write("# Playlist: ytbred_hls (GitHub Actions)\n")
+        f.write("# Playlist: ytbred_hls\n")
         f.write(f"# Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}\n")
-        f.write("# https://github.com/botechred/ytbred\n\n")
+        f.write("# https://github.com/botechred/ytbred\n")
+        f.write("# Not: HLS linkleri GitHub Actions'ta bloklandığı için watch linkleri kullanıldı.\n\n")
         
-        try:
-            with open("video_id.txt", "r", encoding="utf-8") as id_file:
-                video_ids = [line.strip() for line in id_file if line.strip() and not line.strip().startswith("#")]
-        except FileNotFoundError:
-            f.write("# Hata: video_id.txt bulunamadı!\n")
-            return
-
-        print(f"Toplam {len(video_ids)} video işleniyor...")
-        
-        for idx, video_id in enumerate(video_ids, 1):
-            print(f"[{idx}/{len(video_ids)}] {video_id}")
-            title = get_video_info(video_id)
-            hls_url = get_hls_url(video_id)
+        for video_id in video_ids:
+            # Basit başlık (YouTube sayfası açıldığında kanal+başlık görünür)
+            title = f"YouTube Live - {video_id}"
             
             f.write(f"#EXTINF:-1 tvg-id=\"{video_id}\" group-title=\"ytbred\",{title}\n")
-            f.write(f"{hls_url}\n\n")
+            f.write(f"https://www.youtube.com/watch?v={video_id}\n\n")
     
-    print(f"✅ Playlist oluşturuldu: {output_file}")
+    print(f"✅ Playlist oluşturuldu: {output_file} ({len(video_ids)} video)")
 
 if __name__ == "__main__":
     main()
