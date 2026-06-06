@@ -1,4 +1,3 @@
-
 import base64
 import os
 import re
@@ -17,7 +16,6 @@ if not ENCRYPTED_URL:
     sys.exit(1)
 
 def create_redtube_folder():
-    # İngilizce karakter kullan - UTF-8 sorunu yaşamamak için
     if not os.path.exists("redtube"):
         os.makedirs("redtube")
 
@@ -43,52 +41,54 @@ def parse_playlist(content):
     return channels
 
 def save_channel_as_m3u8(channel_name, stream_url):
-    # Güvenli dosya adı oluştur (Türkçe karakterleri dönüştür)
+    # Güvenli dosya adı
     safe_name = "".join(c for c in channel_name if c.isalnum() or c in ".-_").rstrip()
-    # Türkçe karakterleri değiştir
     safe_name = safe_name.replace('ı', 'i').replace('ğ', 'g').replace('ü', 'u').replace('ş', 's').replace('ö', 'o').replace('ç', 'c')
     safe_name = safe_name.replace('İ', 'I').replace('Ğ', 'G').replace('Ü', 'U').replace('Ş', 'S').replace('Ö', 'O').replace('Ç', 'C')
+    
     filename = f"redtube/{safe_name}.m3u8"
+    
     content = f"""#EXTM3U
 #EXT-X-VERSION:3
 #EXT-X-STREAM-INF:BANDWIDTH=1280000,RESOLUTION=1280x720
 {stream_url}
 """
+
+    # === DEĞİŞİKLİK KONTROLÜ ===
     if os.path.exists(filename):
         with open(filename, "r", encoding="utf-8") as f:
-            if f.read() == content:
+            if f.read().strip() == content.strip():
                 print(f"No change: {filename}")
-                return  # Değişiklik yoksa yazma
+                return
     
     with open(filename, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"Updated: {filename}")
 
 def create_master_playlist(channels):
-    """Ana M3U listesi oluşturur"""
     master_content = ["#EXTM3U"]
     master_content.append("# Playlist: redtube")
     master_content.append(f"# Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     master_content.append(f"# Total channels: {len(channels)}")
     master_content.append("")
-    
+
     for channel_name, stream_url in channels:
         master_content.append(f"#EXTINF:-1 tvg-logo=\"\" group-title=\"redtube\",{channel_name}")
         master_content.append(stream_url)
         master_content.append("")
-    
+
     master_filename = "redtube/redtube.m3u"
     with open(master_filename, "w", encoding="utf-8") as f:
         f.write("\n".join(master_content))
     print(f"✅ Master playlist saved: {master_filename}")
-    
-    # GitHub raw için basit liste
+
+    # GitHub raw için
     github_filename = "redtube/redtube_github.m3u"
     github_content = ["#EXTM3U"]
     for channel_name, stream_url in channels:
         github_content.append(f"#EXTINF:-1,{channel_name}")
         github_content.append(stream_url)
-    
+
     with open(github_filename, "w", encoding="utf-8") as f:
         f.write("\n".join(github_content))
     print(f"✅ GitHub compatible playlist saved: {github_filename}")
@@ -110,14 +110,9 @@ def main():
         for name, url in channels:
             save_channel_as_m3u8(name, url)
         
-        # Ana M3U listesini oluştur
         create_master_playlist(channels)
         
-        print(f"\n✅ Successfully saved {len(channels)} channels to redtube/")
-        print("📁 Files:")
-        print("   - redtube/redtube.m3u (master playlist)")
-        print("   - redtube/redtube_github.m3u (GitHub raw friendly)")
-        print("   - redtube/*.m3u8 (individual channel files)")
+        print(f"\n✅ Successfully processed {len(channels)} channels")
     
     except Exception as e:
         print(f"Error: {e}")
