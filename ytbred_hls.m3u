@@ -1,16 +1,7 @@
 #EXTM3U
 #EXT-X-PLAYLIST-TYPE:VOD
 # Playlist: ytbred_hls
-# Generated: 2026-06-07 03:35:09 UTC
+# Generated: 2026-06-07 08:52:24 UTC
 # https://github.com/botechred/ytbred
 # Not: HLS linkleri GitHub Actions'ta bloklandığı için watch linkleri kullanıldı.
-
-#EXTINF:-1 tvg-id="ztmY_cCtUl0" group-title="ytbred",YouTube Live - ztmY_cCtUl0
-https://www.youtube.com/watch?v=ztmY_cCtUl0
-
-#EXTINF:-1 tvg-id="ftshgiSRZOk" group-title="ytbred",YouTube Live - ftshgiSRZOk
-https://www.youtube.com/watch?v=ftshgiSRZOk
-
-#EXTINF:-1 tvg-id="8uNelFh0oz4" group-title="ytbred",YouTube Live - 8uNelFh0oz4
-https://www.youtube.com/watch?v=8uNelFh0oz4
 
